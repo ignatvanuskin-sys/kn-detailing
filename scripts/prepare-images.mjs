@@ -47,11 +47,6 @@ const PLAN = [
   ["fleet-wide", [1280, 1920], "p-033"],
   ["craft-card", [480, 800], "p-005"], // 02 / Наш подход
   ["craft-tall", [480, 800], "p-005"],
-  ["craft-wide", [1280, 1920], "p-005"], // before-layer of the process/result slider
-  ["ready-b-tall", [480, 800], "p-016"], // finished black Lexus, KN plate
-  ["ready-b-wide", [1280, 1920], "p-016"],
-  ["ready-c-tall", [480, 800], "p-018"], // finished white BMW X5
-  ["ready-c-wide", [1280, 1920], "p-018"],
   /* 04 / Наши работы — its own photos, so a work card never repeats a service
      card standing right above it on the same screen */
   ["work-a-tall", [480, 800], "p-042"], // black Mercedes, KN sign on the wall
@@ -67,9 +62,27 @@ const PLAN = [
 for (const [name, src] of Object.entries(SERVICES)) {
   PLAN.push([`${name}-card`, [480, 800], src]);
   PLAN.push([`${name}-portrait`, [420, 760], src]);
-  PLAN.push([`${name}-tall`, [480, 800], src]);
-  PLAN.push([`${name}-wide`, [1280, 1920], src]);
 }
+
+/* 03 / Результат оставлен кадром из шаблона sentr — по просьбе заказчика этот
+   блок выглядит как в исходном шаблоне. Файлы берутся из бэкапа оригинала и
+   кладутся под префиксом stock-, чтобы не путаться с фото студии. */
+const STOCK_BASES = [
+  "wash-tall",
+  "wash-wide",
+  "interior-tall",
+  "interior-wide",
+  "studio-tall",
+  "studio-wide",
+  "fleet-tall",
+  "fleet-wide",
+];
+const stockFiles = STOCK_BASES.flatMap((base) =>
+  (base.endsWith("wide") ? [1280, 1920] : [480, 800]).map((w) => ({
+    file: `stock-${base}-${w}.webp`,
+    src: path.join(BACKUP_DIR, `${base}-${w}.webp`),
+  })),
+);
 
 /* the variant is always the last segment, so "ready-b-tall" -> "tall" */
 const variantOf = (base) => base.split("-").pop();
@@ -83,13 +96,19 @@ async function report() {
       console.log(`${f.file.padEnd(28)} ${f.w}x${f.h}  <- ${src}.jpg`);
     }
   }
+  for (const s of stockFiles) console.log(`${s.file.padEnd(28)} stock  <- ${path.basename(s.src)}`);
   const all = PLAN.flatMap(filesFor);
-  console.log(`\n${all.length} files, sources: ${[...new Set(PLAN.map((p) => p[2]))].join(", ")}`);
+  console.log(
+    `\n${all.length} generated + ${stockFiles.length} stock files, sources: ${[...new Set(PLAN.map((p) => p[2]))].join(", ")}`,
+  );
 }
 
 async function build() {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
-  const wanted = new Set(PLAN.flatMap(filesFor).map((f) => f.file));
+  const wanted = new Set([
+    ...PLAN.flatMap(filesFor).map((f) => f.file),
+    ...stockFiles.map((s) => s.file),
+  ]);
 
   /* anything from the template's own set that this plan no longer uses */
   for (const old of fs.readdirSync(OUT_DIR).filter((f) => f.endsWith(".webp"))) {
@@ -101,6 +120,15 @@ async function build() {
   }
 
   let made = 0;
+  for (const s of stockFiles) {
+    if (!fs.existsSync(s.src)) {
+      console.log(`SKIP ${s.file}: no original at ${path.basename(s.src)}`);
+      continue;
+    }
+    fs.copyFileSync(s.src, path.join(OUT_DIR, s.file));
+    made++;
+  }
+
   for (const entry of PLAN) {
     const [, , srcName] = entry;
     const src = path.join(SRC_DIR, `${srcName}.jpg`);

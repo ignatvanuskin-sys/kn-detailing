@@ -141,43 +141,14 @@ const services = [
   },
 ];
 
-/* Слайдер «процесс → результат».
-   В галерее 2ГИС у студии нет парных кадров «до/после» одного и того же
-   автомобиля, поэтому слайдер показывает процесс работы и готовую машину —
-   без подписи с конкретной маркой, которой на фото нет. */
+/* Слайдер «до / после» оставлен кадром из шаблона sentr — вместе с подписями,
+   как в исходном шаблоне. В галерее 2ГИС парных фотографий «до/после» одной и
+   той же машины нет, поэтому заменить их реальными было нечем. */
 const cases = [
-  {
-    label: "Оклейка бронеплёнкой",
-    note: "Плёнка уходит под кромку, без пузырей и подрезов",
-    beforeMobile: "craft-tall",
-    beforeDesktop: "craft-wide",
-    afterMobile: "hero-mobile",
-    afterDesktop: "hero-wide",
-  },
-  {
-    label: "Полировка и керамика",
-    note: "Готовим ЛКП и закрываем защитным составом",
-    beforeMobile: "polish-tall",
-    beforeDesktop: "polish-wide",
-    afterMobile: "ready-b-tall",
-    afterDesktop: "ready-b-wide",
-  },
-  {
-    label: "Тонировка и шумоизоляция",
-    note: "Разбираем двери, клеим плёнку и шумку",
-    beforeMobile: "sound-tall",
-    beforeDesktop: "sound-wide",
-    afterMobile: "ready-c-tall",
-    afterDesktop: "ready-c-wide",
-  },
-  {
-    label: "Работа с элементами кузова",
-    note: "Аккуратно снимаем и ставим детали обратно",
-    beforeMobile: "salon-tall",
-    beforeDesktop: "salon-wide",
-    afterMobile: "fleet-mobile",
-    afterDesktop: "fleet-wide",
-  },
+  { model: "Toyota Camry", service: "Комплексный уход", result: "Чисто и аккуратно", mobile: "stock-wash-tall", desktop: "stock-wash-wide" },
+  { model: "Lexus RX", service: "Химчистка салона", result: "Как новый", mobile: "stock-interior-tall", desktop: "stock-interior-wide" },
+  { model: "Toyota Land Cruiser Prado", service: "Полировка кузова", result: "Глубокий блеск", mobile: "stock-studio-tall", desktop: "stock-studio-wide" },
+  { model: "Hyundai Tucson", service: "Защита кузова", result: "Проще уход каждый день", mobile: "stock-fleet-tall", desktop: "stock-fleet-wide" },
 ];
 
 /* Свои фото для блока «Наши работы» — иначе карточки дублировали бы карточки
@@ -256,17 +227,8 @@ const HOURS = "Ежедневно 11:00–22:00";
 /* Координаты входа из карточки 2ГИС (Наурызбайский район, мкр Таусамалы). */
 const MAP_POINT = { lat: 43.19982, lon: 76.844972 };
 
-/* 2GIS key.
-    2GIS does not offer an embed that works anonymously: their map widget is
-    issued per organisation from the personal account (widgets.2gis.com), so an
-    iframe here is useless without a key. Paste the key from that page and the
-    map switches to 2GIS. While it is empty the block shows a styled placeholder
-    with a working link, so the site is never broken — it just has no iframe yet. */
-const TWOGIS_KEY = "";
-
-/** Карточка студии в 2ГИС — единственная ссылка «открыть на карте». */
+/** Карточка студии в 2ГИС — цель ссылки «открыть на карте». */
 const TWOGIS_FIRM_URL = "https://2gis.kz/almaty/firm/70000001099671293";
-const TWOGIS_FALLBACK_URL = `https://2gis.kz/almaty/search/${encodeURIComponent(`${CITY}, ${ADDRESS}`)}`;
 const CONTACT_LINKS = {
   phone: PHONE_HREF,
   whatsapp: "https://wa.me/77066080801",
@@ -411,16 +373,16 @@ function BeforeAfter() {
       >
         <div className="ba-layer ba-after">
           <Picture
-            mobile={art(current.afterMobile, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(current.afterDesktop, [1280, 1920], "1050px")}
-            alt={`${current.label} — готовый результат`}
+            mobile={art(current.mobile, [480, 800], "(max-width: 899px) 100vw")}
+            desktop={art(current.desktop, [1280, 1920], "1050px")}
+            alt={`${current.model} — после детейлинга`}
           />
         </div>
         <div className="ba-layer ba-before">
           <Picture
-            mobile={art(current.beforeMobile, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(current.beforeDesktop, [1280, 1920], "1050px")}
-            alt={`${current.label} — процесс работы в боксе`}
+            mobile={art(current.mobile, [480, 800], "(max-width: 899px) 100vw")}
+            desktop={art(current.desktop, [1280, 1920], "1050px")}
+            alt={`${current.model} — до детейлинга`}
           />
         </div>
         <div className="ba-divider" aria-hidden="true" />
@@ -433,7 +395,7 @@ function BeforeAfter() {
           className="ba-control"
           role="slider"
           tabIndex={0}
-          aria-label={`Процесс и результат: ${current.label}`}
+          aria-label={`Сравнение до и после: ${current.model}`}
           aria-valuemin={4}
           aria-valuemax={96}
           aria-valuenow={value}
@@ -444,25 +406,25 @@ function BeforeAfter() {
 
       <div className="ba-caption">
         <div>
-          <span className="eyebrow">Процесс / результат</span>
+          <span className="eyebrow">До / после</span>
           <p>
-            {current.label}
+            {current.model} — {current.service}
             <br />
-            <strong>{current.note}</strong>
+            <strong>{current.result}</strong>
           </p>
         </div>
       </div>
 
-      <div className="case-tabs" role="group" aria-label="Выбор работы для сравнения">
+      <div className="case-tabs" role="group" aria-label="Выбор автомобиля для сравнения">
         {cases.map((item, i) => (
           <button
-            key={item.label}
+            key={item.model}
             type="button"
             className="case-tab"
             aria-pressed={i === index}
             onClick={() => setIndex(i)}
           >
-            {item.label}
+            {item.model}
           </button>
         ))}
       </div>
@@ -554,28 +516,37 @@ const serviceTitleToOption: Record<string, string> = {
   Салон: "Химчистка салона",
 };
 
-/**
- * Contact map.
- *
- * Provider is chosen at build time by whether a 2GIS key is present:
- *
- *  - with a key   -> 2GIS widget iframe (the 2GIS map people actually use);
- *  - without one  -> the Yandex widget, which works anonymously.
- *
- * 2GIS has no anonymous embed: `widget.2gis.ru` renders its banner constructor
- * for an unknown key, so shipping it keyless would show a builder to visitors.
- * A key comes from the 2GIS personal account (widgets.2gis.com). Until one is
- * pasted in, the site stays on Yandex instead of showing something broken.
- *
- * Either way the iframe is third-party and heavy, so it is only inserted once
- * the block is near the viewport. The link underneath is a real anchor, so the
- * address stays reachable if the iframe is blocked or fails.
- */
+/* ------------------------------------------------------------------ карта */
+
+/* Карта 2ГИС без iframe.
+   Официальный виджет 2ГИС выдаётся организации в личном кабинете
+   (widgets.2gis.com) и без ключа отдаёт страницу «Something went wrong» —
+   это проверено, поэтому встраивать его вслепую нельзя. Тайлы же 2ГИС
+   отдаются открыто, и здесь из них собирается та же карта, что видит
+   посетитель на 2gis.kz: без ключа, без стороннего iframe и без запросов
+   к чужим скриптам. Тайлы грузятся, только когда блок подходит к экрану. */
+const TILE_SIZE = 256;
+const MAP_ZOOM = 16;
+const MAP_COLS = 4;
+const MAP_ROWS = 3;
+
+/** Пиксельные координаты точки в проекции веб-Меркатора на заданном зуме. */
+function projectPoint(lat: number, lon: number, zoom: number) {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const sin = Math.sin((lat * Math.PI) / 180);
+  return {
+    x: ((lon + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale,
+  };
+}
+
+/** Два поддомена подряд, чтобы браузер качал тайлы параллельно. */
+const tileUrl = (x: number, y: number) =>
+  `https://tile${(x + y) % 2}.maps.2gis.com/tiles?x=${x}&y=${y}&z=${MAP_ZOOM}&v=1&ts=online_sd&style=light`;
+
 function ContactMap() {
   const holder = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
-
-  const use2GIS = TWOGIS_KEY.trim().length > 0;
 
   useEffect(() => {
     const el = holder.current;
@@ -597,25 +568,57 @@ function ContactMap() {
     return () => io.disconnect();
   }, [visible]);
 
-  const point = `${MAP_POINT.lon}%2C${MAP_POINT.lat}`;
-  const src = use2GIS
-    ? `https://widget.2gis.ru/2.0/frame?key=${encodeURIComponent(TWOGIS_KEY.trim())}&point=${MAP_POINT.lon}%2C${MAP_POINT.lat}&z=16`
-    : `https://yandex.ru/map-widget/v1/?ll=${point}&z=16&pt=${point}%2Cpm2rdm`;
+  /* Точка студии в пикселях тайловой сетки, и тайловый блок, сдвинутый так,
+     чтобы эта точка оказалась ровно в центре видимого прямоугольника. */
+  const point = projectPoint(MAP_POINT.lat, MAP_POINT.lon, MAP_ZOOM);
+  const firstCol = Math.floor(point.x / TILE_SIZE) - Math.floor(MAP_COLS / 2);
+  const firstRow = Math.floor(point.y / TILE_SIZE) - Math.floor(MAP_ROWS / 2);
+  const offsetX = point.x - firstCol * TILE_SIZE;
+  const offsetY = point.y - firstRow * TILE_SIZE;
 
-  const openUrl = use2GIS ? TWOGIS_FALLBACK_URL : CONTACT_LINKS.address;
-  const openLabel = "Открыть в 2ГИС";
+  const tiles = [];
+  for (let row = 0; row < MAP_ROWS; row++) {
+    for (let col = 0; col < MAP_COLS; col++) {
+      tiles.push({
+        x: firstCol + col,
+        y: firstRow + row,
+        left: col * TILE_SIZE,
+        top: row * TILE_SIZE,
+      });
+    }
+  }
 
   return (
     <div className="contact-map reveal" ref={holder} data-shown="">
       {visible ? (
-        <iframe
-          className="contact-map__frame"
-          src={src}
-          title={`Карта: ${CITY}, ${ADDRESS}`}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          allowFullScreen
-        />
+        <div className="map-tiles">
+          <div
+            className="map-tiles__grid"
+            style={{
+              left: `calc(50% - ${offsetX}px)`,
+              top: `calc(50% - ${offsetY}px)`,
+              width: MAP_COLS * TILE_SIZE,
+              height: MAP_ROWS * TILE_SIZE,
+            }}
+          >
+            {tiles.map((tile) => (
+              <img
+                key={`${tile.x}-${tile.y}`}
+                className="map-tiles__tile"
+                src={tileUrl(tile.x, tile.y)}
+                style={{ left: tile.left, top: tile.top }}
+                width={TILE_SIZE}
+                height={TILE_SIZE}
+                alt=""
+                decoding="async"
+              />
+            ))}
+          </div>
+          <span className="map-pin" aria-hidden="true">
+            <MapPin size={22} />
+          </span>
+          <span className="map-credit">© 2ГИС</span>
+        </div>
       ) : (
         <div className="contact-map__placeholder" aria-hidden="true">
           <MapPin size={26} />
@@ -624,9 +627,9 @@ function ContactMap() {
           </span>
         </div>
       )}
-      <a className="contact-map__link" href={openUrl} target="_blank" rel="noreferrer">
+      <a className="contact-map__link" href={CONTACT_LINKS.address} target="_blank" rel="noreferrer">
         <MapPin size={16} aria-hidden="true" />
-        {openLabel}
+        Открыть в 2ГИС
         <ArrowUpRight size={14} aria-hidden="true" />
       </a>
     </div>
@@ -1400,7 +1403,7 @@ export default function Home() {
                   Разница <em>видна сразу.</em>
                 </>
               }
-              copy="Потяните ползунок: слева — как идёт работа в боксе, справа — что получается в итоге."
+              copy="Сравните состояние автомобиля до и после. Потяните ползунок по фото."
             />
             <BeforeAfter />
           </div>
