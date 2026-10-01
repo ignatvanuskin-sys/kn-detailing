@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { site } from "../site.config";
 import {
   ArrowUpRight,
   CalendarDays,
@@ -86,171 +87,78 @@ function BoilIcon({ children }: { children: ReactNode }) {
 
 /* ------------------------------------------------------------- content */
 
-/* ЦЕНЫ — ДЕМО-ЗНАЧЕНИЯ.
-   В карточке KN Detailing Studio на 2ГИС прайс не опубликован, поэтому здесь
-   стоят ориентировочные суммы, чтобы в форме записи работал расчёт.
-   Заменить на реальный прайс-лист студии перед публикацией. */
-const services = [
-  {
-    no: "01",
-    title: "Оклейка",
-    note: "Бронеплёнка и PPF",
-    price: "от 450 000 ₸",
-    media: "wrap",
-    detail: "Бронеплёнка на кузов, бамперы, фары и зоны риска. Американские материалы, завороты под кромку, гарантия 12 лет.",
-  },
-  {
-    no: "02",
-    title: "Керамика",
-    note: "Покрытие и гидрофоб",
-    price: "от 90 000 ₸",
-    media: "ceramic",
-    detail: "Керамическое покрытие поверх ЛКП или плёнки: вода скатывается, грязь прилипает меньше, мыть машину нужно реже.",
-  },
-  {
-    no: "03",
-    title: "Тонировка",
-    note: "Стёкла и оптика",
-    price: "от 25 000 ₸",
-    media: "tint",
-    detail: "Тонировка по кругу с допустимой светопропускаемостью: салон не выгорает, в машине прохладнее, обзор без искажений.",
-  },
-  {
-    no: "04",
-    title: "Полировка",
-    note: "Блеск и глубина цвета",
-    price: "от 40 000 ₸",
-    media: "polish",
-    detail: "Убираем риски, голограммы и следы автомойки. Перед оклейкой готовим кузов, чтобы дефекты не «запечатались» под плёнкой.",
-  },
-  {
-    no: "05",
-    title: "Шумоизоляция",
-    note: "Тишина в салоне",
-    price: "от 150 000 ₸",
-    media: "sound",
-    detail: "Двери, арки, пол и багажник: снижаем шум колёс и дороги, кузов начинает звучать плотнее, музыка — чище.",
-  },
-  {
-    no: "06",
-    title: "Салон",
-    note: "Ремонт и пошив",
-    price: "от 80 000 ₸",
-    media: "salon",
-    detail: "Ремонт и перетяжка салона, пошив по лекалам, химчистка кожи и текстиля, устранение заломов и запахов.",
-  },
-];
+/* Строки в конфиге могут содержать <em>…</em> (курсивная вставка акцентным
+   шрифтом) и <br /> — разметку разбираем здесь, без dangerouslySetInnerHTML. */
+function Em({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/<\/?em>/).map((part, i) => (i % 2 ? <em key={i}>{part}</em> : part))}
+    </>
+  );
+}
 
-/* Слайдер «до / после» оставлен кадром из шаблона sentr — вместе с подписями,
-   как в исходном шаблоне. В галерее 2ГИС парных фотографий «до/после» одной и
-   той же машины нет, поэтому заменить их реальными было нечем. */
-const cases = [
-  { model: "Toyota Camry", service: "Комплексный уход", result: "Чисто и аккуратно", mobile: "stock-wash-tall", desktop: "stock-wash-wide" },
-  { model: "Lexus RX", service: "Химчистка салона", result: "Как новый", mobile: "stock-interior-tall", desktop: "stock-interior-wide" },
-  { model: "Toyota Land Cruiser Prado", service: "Полировка кузова", result: "Глубокий блеск", mobile: "stock-studio-tall", desktop: "stock-studio-wide" },
-  { model: "Hyundai Tucson", service: "Защита кузова", result: "Проще уход каждый день", mobile: "stock-fleet-tall", desktop: "stock-fleet-wide" },
-];
+function RichText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split("<br />").map((line, i) => (
+        <Fragment key={i}>
+          {i > 0 ? <br /> : null}
+          <Em text={line} />
+        </Fragment>
+      ))}
+    </>
+  );
+}
 
-/* Свои фото для блока «Наши работы» — иначе карточки дублировали бы карточки
-   услуг, которые стоят выше на том же экране. */
-const portfolio = [
-  { label: "Оклейка", service: "Бронеплёнка на кузов", result: "Завороты под кромку", mobile: "work-a-tall", desktop: "work-a-portrait", variant: "lead" },
-  { label: "Полировка", service: "Керамика поверх ЛКП", result: "Блеск без голограмм", mobile: "work-b-tall", desktop: "work-b-portrait", variant: "wide" },
-  { label: "Шумоизоляция", service: "Двери и арки", result: "Тише в салоне", mobile: "work-c-tall", desktop: "work-c-portrait", variant: "tall" },
-  { label: "Тонировка", service: "Стёкла по кругу", result: "Прохладнее в салоне", mobile: "work-d-tall", desktop: "work-d-portrait", variant: "std" },
-];
+/* Весь контент живёт в client/src/site.config.ts — здесь только раскладка.
+   Локальные имена оставлены прежними, чтобы компоненты читались как раньше. */
+const services = site.services.items;
+const cases = site.results.items;
+const portfolio = site.works.items;
+const packages = site.packages.items;
+const reviews = site.reviews.items;
+const process = site.process.items;
+const brands = site.brands.items;
 
-const packages = [
-  {
-    name: "GLAZE",
-    title: "Глянцевая оклейка",
-    price: "от 450 000 ₸",
-    items: ["Бронеплёнка на кузов", "Американская плёнка", "Завороты под кромку", "Гарантия 12 лет"],
-    cta: "Записаться",
-  },
-  {
-    name: "LUX",
-    title: "Люкс-пакет",
-    price: "от 750 000 ₸",
-    items: ["Всё из GLAZE", "Керамика поверх плёнки", "Тонировка стёкол", "Шумоизоляция дверей", "Подменное авто на время работ"],
-    cta: "Записаться",
-  },
-  {
-    name: "COMFORT",
-    title: "Комфорт и тишина",
-    price: "от 180 000 ₸",
-    items: ["Шумоизоляция салона", "Тонировка стёкол", "Антидождь на стёкла", "Химчистка салона"],
-    cta: "Рассчитать стоимость",
-  },
-];
+/** Иконки списка преимуществ в блоке «02 / Наш подход» (берутся по кругу). */
+const APPROACH_ICONS = [Sparkles, ShieldCheck, Droplets];
 
-const reviews = [
-  {
-    name: "Отзыв с 2ГИС",
-    car: "Бронеплёнка · Lexus",
-    text: "Бронировал здесь свою новую машину глянцевой плёнкой. Сразу видно, что используют только качественные материалы. Дали гарантию на 12 лет, это внушает доверие. Теперь за ЛКП не переживаю совсем.",
-  },
-  {
-    name: "Отзыв с 2ГИС",
-    car: "Оклейка · Toyota",
-    text: "Качество плёнки американского производства ощущается сразу, да и цена порадовала. Завороты настолько аккуратные, что плёнку вообще не видно.",
-  },
-  {
-    name: "Отзыв с 2ГИС",
-    car: "Люкс-пакет · Zeekr",
-    text: "Никогда не думал, что бронеплёнка может так преобразить автомобиль. Взял люкс пакет и не пожалел. Все завороты выполнены настолько аккуратно, что выглядит как заводская покраска.",
-  },
-];
-
-const process = [
-  { title: "Диагностика", note: "Осматриваем ЛКП под лампой, фиксируем сколы и потёртости до начала работ." },
-  { title: "Подбор плёнки", note: "Показываем образцы — глянец, мат, сатин. Считаем точную стоимость и сроки." },
-  { title: "Подготовка", note: "Мойка, обезжиривание и разбор съёмных элементов кузова." },
-  { title: "Оклейка в боксе", note: "Завороты под кромку, без пыли и пузырей. На сложные зоны — лекала." },
-  { title: "Контроль качества", note: "Проверяем результат при разном свете, делаем фотоотчёт до и после." },
-  { title: "Выдача и гарантия", note: "Отдаём автомобиль с гарантийным талоном на 12 лет и советами по уходу." },
-];
-
-const brands = ["Lexus", "Toyota", "Hyundai", "Lixiang", "Zeekr", "BMW", "Mercedes-Benz", "Audi", "Porsche", "Kia", "Volkswagen", "Land Rover"];
+/** Сколько колонок дать сетке услуг, чтобы последний ряд не пустовал.
+    Услуг может быть и четыре, и восемь — число колонок считается от них. */
+function gridColumns(count: number) {
+  let best = 1;
+  let fewestEmpty = Number.POSITIVE_INFINITY;
+  for (const cols of [4, 3, 2]) {
+    if (count < cols) continue;
+    const empty = (cols - (count % cols)) % cols;
+    if (empty < fewestEmpty) {
+      fewestEmpty = empty;
+      best = cols;
+    }
+  }
+  return best;
+}
 
 /* ------------------------------------------------------------------ контакты */
 
-/* Данные взяты из карточки «Kn Detailing Studio» в 2ГИС (Алматы, филиал
-   70000001099671293) и профиля Instagram @kn_detailing_almaty.
-   Телефон и WhatsApp совпадают с 2ГИС. */
-const PHONE_DISPLAY = "+7 706 608 08 01";
-const PHONE_HREF = "tel:+77066080801";
-const CITY = "Алматы";
-const ADDRESS = "Центральная, 27а/1 · Таусамалы";
-const HOURS = "Ежедневно 11:00–22:00";
-
-/* Координаты входа из карточки 2ГИС (Наурызбайский район, мкр Таусамалы). */
-const MAP_POINT = { lat: 43.19982, lon: 76.844972 };
-
-/** Карточка студии в 2ГИС — цель ссылки «открыть на карте». */
-const TWOGIS_FIRM_URL = "https://2gis.kz/almaty/firm/70000001099671293";
+const PHONE_DISPLAY = site.location.phone.display;
+const PHONE_HREF = site.location.phone.href;
+const CITY = site.location.city;
+const ADDRESS = site.location.address;
+const HOURS = site.location.hours;
+const MAP_POINT = site.location.map;
 const CONTACT_LINKS = {
   phone: PHONE_HREF,
-  whatsapp: "https://wa.me/77066080801",
-  instagram: "https://instagram.com/kn_detailing_almaty",
-  address: TWOGIS_FIRM_URL,
+  whatsapp: site.location.links.whatsapp,
+  instagram: site.location.links.instagram,
+  address: site.location.links.mapCard,
 };
 
-/* Individual services, in the order a car owner actually walks the list.
-   `price` is the base rate in tenge, used only to show a live estimate. */
-const serviceOptions = [
-  { name: "Бронеплёнка (PPF)", price: 450000 },
-  { name: "Цветная оклейка", price: 380000 },
-  { name: "Керамическое покрытие", price: 90000 },
-  { name: "Тонировка стёкол", price: 25000 },
-  { name: "Полировка кузова", price: 40000 },
-  { name: "Шумоизоляция", price: 150000 },
-  { name: "Химчистка салона", price: 25000 },
-] as const;
+/* Список услуг и цены для формы записи — booking.options в конфиге. */
+const serviceOptions = site.booking.options;
+const serviceNames: string[] = serviceOptions.map((s) => s.name);
 
 const packOptions = packages.map((p) => ({ name: p.name, title: p.title, price: Number(p.price.replace(/\D/g, "").replace(/^0+/, "")) || 0 }));
-
-const serviceNames: string[] = serviceOptions.map((s) => s.name);
 const yearOptions = Array.from({ length: 30 }, (_, i) => String(new Date().getFullYear() - i));
 
 /** Renders tenge with thin spaces: 25 000 ₸ */
@@ -373,15 +281,15 @@ function BeforeAfter() {
       >
         <div className="ba-layer ba-after">
           <Picture
-            mobile={art(current.mobile, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(current.desktop, [1280, 1920], "1050px")}
+            mobile={art(`${current.photo}-tall`, [480, 800], "(max-width: 899px) 100vw")}
+            desktop={art(`${current.photo}-wide`, [1280, 1920], "1050px")}
             alt={`${current.model} — после детейлинга`}
           />
         </div>
         <div className="ba-layer ba-before">
           <Picture
-            mobile={art(current.mobile, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(current.desktop, [1280, 1920], "1050px")}
+            mobile={art(`${current.photo}-tall`, [480, 800], "(max-width: 899px) 100vw")}
+            desktop={art(`${current.photo}-wide`, [1280, 1920], "1050px")}
             alt={`${current.model} — до детейлинга`}
           />
         </div>
@@ -442,7 +350,8 @@ type BookingForm = {
   year: string;
   name: string;
   phone: string;
-  channel: "phone" | "whatsapp";
+  /* id из booking.channels конфига — список каналов связи задаёт клиент */
+  channel: string;
   date: string;
   time: string;
   comment: string;
@@ -505,16 +414,14 @@ function Estimate({ pack = "", services }: { pack?: string; services: string[] }
   );
 }
 
-/* Opening the sheet from a service card passes that card's short title
-   ("Мойка", "Защита"), while the form uses the fuller option names. */
-const serviceTitleToOption: Record<string, string> = {
-  Оклейка: "Бронеплёнка (PPF)",
-  Керамика: "Керамическое покрытие",
-  Тонировка: "Тонировка стёкол",
-  Полировка: "Полировка кузова",
-  Шумоизоляция: "Шумоизоляция",
-  Салон: "Химчистка салона",
-};
+/* Карточка услуги передаёт своё короткое название, а форма работает с полными
+   названиями опций. Связь задаётся полем service в booking.options конфига. */
+const serviceTitleToOption: Record<string, string> = Object.fromEntries(
+  site.booking.options.filter((option) => option.service).map((option) => [option.service as string, option.name]),
+);
+
+const channelLabel = (id: string) => site.booking.channels.find((channel) => channel.id === id)?.label ?? id;
+const channelShort = (id: string) => site.booking.channels.find((channel) => channel.id === id)?.short ?? id;
 
 /* ------------------------------------------------------------------ карта */
 
@@ -526,7 +433,7 @@ const serviceTitleToOption: Record<string, string> = {
    посетитель на 2gis.kz: без ключа, без стороннего iframe и без запросов
    к чужим скриптам. Тайлы грузятся, только когда блок подходит к экрану. */
 const TILE_SIZE = 256;
-const MAP_ZOOM = 16;
+const MAP_ZOOM = site.location.map.zoom;
 const MAP_COLS = 4;
 const MAP_ROWS = 3;
 
@@ -636,7 +543,7 @@ function ContactMap() {
   );
 }
 
-const STEPS = ["Услуга", "Автомобиль", "Контакты", "Дата", "Проверка"];
+const STEPS = site.booking.stepLabels;
 
 function BookingSheet({ open, onClose, initialService }: { open: boolean; onClose: () => void; initialService?: string }) {
   const [step, setStep] = useState(0);
@@ -763,7 +670,7 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
     window.setTimeout(() => el.scrollIntoView({ block: "nearest", behavior: "smooth" }), 220);
   };
 
-  const stepTitles = ["Что сделаем с автомобилем?", "Расскажите об автомобиле", "Куда отправить подтверждение?", "Когда удобно приехать?", "Проверьте заявку"];
+  const stepTitles = site.booking.stepTitles;
 
   return (
     <div
@@ -808,7 +715,7 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
         </div>
 
         <div className="modal-head">
-          <span className="modal-head-label">{sent ? "Заявка принята" : "Онлайн-запись"}</span>
+          <span className="modal-head-label">{sent ? site.booking.sentLabel : site.booking.headLabel}</span>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Закрыть окно записи">
             <X size={18} />
           </button>
@@ -818,7 +725,9 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
           <>
             <div className="modal-steps">
               <div className="modal-top">
-                <span className="eyebrow">KN / BOOKING</span>
+                <span className="eyebrow">
+                  {site.brand.monogram} / {site.booking.eyebrow}
+                </span>
                 <span className="step-count">
                   {String(step + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
                 </span>
@@ -966,15 +875,15 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                     </label>
                   </div>
                   <div className="contact-row" role="group" aria-label="Способ связи">
-                    {(["phone", "whatsapp"] as const).map((channel) => (
+                    {site.booking.channels.map((channel) => (
                       <button
-                        key={channel}
+                        key={channel.id}
                         type="button"
-                        className={`contact-pill ${form.channel === channel ? "active" : ""}`}
-                        aria-pressed={form.channel === channel}
-                        onClick={() => set("channel", channel)}
+                        className={`contact-pill ${form.channel === channel.id ? "active" : ""}`}
+                        aria-pressed={form.channel === channel.id}
+                        onClick={() => set("channel", channel.id)}
                       >
-                        {channel === "phone" ? "Звонок" : "WhatsApp"}
+                        {channel.label}
                       </button>
                     ))}
                   </div>
@@ -1058,7 +967,7 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                     </div>
                     <div className="recap-row">
                       <span>Способ связи</span>
-                       <b>{form.channel === "phone" ? "Звонок" : "WhatsApp"}</b>
+                        <b>{channelLabel(form.channel)}</b>
                     </div>
                     {form.comment ? (
                       <div className="recap-row">
@@ -1089,7 +998,7 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                   </>
                 ) : (
                   <>
-                    {step === STEPS.length - 1 ? "Отправить заявку" : "Продолжить"}
+                    {step === STEPS.length - 1 ? site.booking.submitLabel : site.booking.continueLabel}
                     {step === STEPS.length - 1 ? <ArrowUpRight size={16} /> : <ChevronRight size={16} />}
                   </>
                 )}
@@ -1101,15 +1010,11 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
             <div className="success-mark">
               <Check size={28} />
             </div>
-            <span className="eyebrow">Заявка принята</span>
+            <span className="eyebrow">{site.booking.sentLabel}</span>
             <h2>
-              До встречи
-              <br />
-              <em>в KN.</em>
+              <RichText text={site.booking.successTitle} />
             </h2>
-            <p>
-              Свяжемся с вами по номеру {form.phone} ({form.channel === "phone" ? "звонок" : "WhatsApp"}), чтобы подтвердить время визита.
-            </p>
+            <p>{site.booking.successText.replace("{phone}", form.phone).replace("{channel}", channelShort(form.channel))}</p>
             <button type="button" className="button button--outline" onClick={onClose}>
               Закрыть
             </button>
@@ -1169,9 +1074,17 @@ export default function Home() {
   return (
     <div className="site-shell">
       <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
-        <a href="#top" className="brand" aria-label="KN Detailing Studio — в начало страницы" onClick={(e) => { e.preventDefault(); scrollTo("top"); }}>
-          <span>KN</span>
-          <small>DETAILING</small>
+        <a
+          href="#top"
+          className="brand"
+          aria-label={`${site.brand.full} — в начало страницы`}
+          onClick={(e) => {
+            e.preventDefault();
+            scrollTo("top");
+          }}
+        >
+          <span>{site.brand.monogram}</span>
+          <small>{site.brand.suffix}</small>
         </a>
 
         <nav className={menuOpen ? "nav-links nav-links--open" : "nav-links"} aria-label="Основная навигация">
@@ -1227,82 +1140,70 @@ export default function Home() {
           <Picture
             className="hero-media"
             priority
-            mobile={art("hero-mobile", [480, 800, 1200], "100vw")}
-            desktop={art("hero-wide", [1280, 1920], "100vw")}
-            alt="Оклейка и защита кузова в студии KN Detailing, Алматы"
+            mobile={art(`${site.hero.photo}-mobile`, [480, 800, 1200], "100vw")}
+            desktop={art(`${site.hero.photo}-wide`, [1280, 1920], "100vw")}
+            alt={`${site.hero.alt}, ${CITY}`}
           />
           <div className="hero-overlay" />
           <div className="hero-content">
             <div className="hero-kicker">
-              <span>Премиум-оклейка и защита кузова</span>
+              <span>{site.hero.kicker}</span>
               <span>
                 {CITY} · {HOURS}
               </span>
             </div>
             <h1>
-              Броня <em>для вашего</em> автомобиля.
+              <RichText text={site.hero.title} />
             </h1>
             <div className="hero-bottom">
-              <p>Бронеплёнка, тонировка, керамика, шумоизоляция и ремонт салона. Американские плёночные материалы, аккуратные завороты, гарантия 12 лет.</p>
+              <p>{site.hero.lead}</p>
               <div className="hero-actions">
                 <button type="button" className="button button--accent" onClick={() => openBooking()}>
-                  Записаться <ArrowUpRight size={16} aria-hidden="true" />
+                  {site.hero.ctaPrimary} <ArrowUpRight size={16} aria-hidden="true" />
                 </button>
                 <button type="button" className="button button--outline button--ghost-light" onClick={() => scrollTo("services")}>
-                  Услуги и цены
+                  {site.hero.ctaSecondary}
                 </button>
               </div>
             </div>
             <div className="hero-meta">
-              <span>
-                <strong>12 лет</strong> гарантия на оклейку
-              </span>
-              <span>
-                <strong>682</strong> отзыва на 2ГИС
-              </span>
-              <span>
-                <strong>4.8</strong> рейтинг студии
-              </span>
+              {site.hero.stats.map((stat) => (
+                <span key={stat.label}>
+                  <strong>{stat.value}</strong> {stat.label}
+                </span>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="trust-bar" aria-label="Ключевые преимущества">
-          <span className="eyebrow">Почему выбирают KN</span>
+          <span className="eyebrow">{site.trust.eyebrow}</span>
           {/* Duplicated once so the marquee can loop seamlessly at -50%.
               The copy is hidden from assistive tech to avoid reading it twice. */}
           <div className="trust-marquee" aria-hidden="true">
             {[0, 1].map((copy) => (
               <div className="trust-marquee-run" key={copy}>
-                <span className="trust-item">Американская плёнка</span>
-                <span className="trust-item">Гарантия 12 лет</span>
-                <span className="trust-item">Подменное авто</span>
-                <span className="trust-item">Эвакуатор</span>
-                <span className="trust-item">Фотоотчёт до/после</span>
-                <span className="trust-item">Запись за 1 минуту</span>
+                {site.trust.items.map((item) => (
+                  <span className="trust-item" key={item}>
+                    {item}
+                  </span>
+                ))}
               </div>
             ))}
           </div>
           <div className="trust-static">
-            <span className="trust-item">Американская плёнка</span>
-            <span className="trust-item">Гарантия 12 лет</span>
-            <span className="trust-item">Подменное авто</span>
-            <span className="trust-item">Фотоотчёт до/после</span>
+            {site.trust.items.slice(0, 4).map((item) => (
+              <span className="trust-item" key={item}>
+                {item}
+              </span>
+            ))}
           </div>
         </section>
 
         <section className="section services-section" id="services">
           <div className="container">
-            <SectionHeading
-              kicker="01 / Услуги"
-              title={
-                <>
-                  Шесть направлений <em>одной студии.</em>
-                </>
-              }
-              copy="Нажмите на услугу, чтобы увидеть детали и записаться. Цены — от базовых, точную стоимость назовём после осмотра автомобиля."
-            />
-            <div className="services-grid">
+            <SectionHeading kicker={site.services.kicker} title={<Em text={site.services.title} />} copy={site.services.copy} />
+            <div className="services-grid" style={{ "--services-cols": gridColumns(services.length) } as React.CSSProperties}>
               {services.map((service, i) => {
                 const isOpen = openService === service.title;
                 return (
@@ -1319,11 +1220,11 @@ export default function Home() {
                     >
                       <div className="service-image">
                         <Picture
-                          mobile={art(`${service.media}-card`, [480, 800], "(max-width: 899px) calc(100vw - 40px)")}
-                          desktop={art(`${service.media}-portrait`, [420, 760], "33vw")}
+                          mobile={art(`${service.photo}-card`, [480, 800], "(max-width: 899px) calc(100vw - 40px)")}
+                          desktop={art(`${service.photo}-portrait`, [420, 760], "33vw")}
                           alt={`${service.title} — ${service.note}`}
                         />
-                        <span className="service-no">{service.no}</span>
+                        <span className="service-no">{String(i + 1).padStart(2, "0")}</span>
                         <span className="service-arrow" aria-hidden="true">
                           <ArrowUpRight size={18} />
                         </span>
@@ -1354,57 +1255,39 @@ export default function Home() {
         <section className="split-feature">
           <div className="split-image">
             <Picture
-              mobile={art("craft-card", [480, 800], "100vw")}
-              desktop={art("craft-tall", [480, 800], "50vw")}
-              alt="Мастер оклеивает кузов автомобиля плёнкой в боксе KN Detailing Studio"
+              mobile={art(`${site.approach.photo}-card`, [480, 800], "100vw")}
+              desktop={art(`${site.approach.photo}-tall`, [480, 800], "50vw")}
+              alt={`${site.approach.alt}, ${CITY}`}
             />
           </div>
           <div className="split-copy">
-            <span className="eyebrow">02 / Наш подход</span>
+            <span className="eyebrow">{site.approach.eyebrow}</span>
             <h2>
-              Премиум-материалы <em>без лишнего.</em>
+              <Em text={site.approach.title} />
             </h2>
-            <p>
-              Работаем с Lexus, Toyota, Hyundai, Lixiang и Zeekr. Показываем образцы плёнки, объясняем, где защита нужна в первую очередь, и не
-              навязываем оклейку всего кузова, если достаточно зон риска.
-            </p>
+            <p>{site.approach.text}</p>
             <div className="feature-list">
-              <div>
-                <BoilIcon>
-                  <Sparkles size={18} aria-hidden="true" />
-                </BoilIcon>
-                <span>Стоимость фиксируем до начала работ</span>
-              </div>
-              <div>
-                <BoilIcon>
-                  <ShieldCheck size={18} aria-hidden="true" />
-                </BoilIcon>
-                <span>Гарантия 12 лет на оклейку и покрытия</span>
-              </div>
-              <div>
-                <BoilIcon>
-                  <Droplets size={18} aria-hidden="true" />
-                </BoilIcon>
-                <span>Подменное авто и эвакуатор на время работ</span>
-              </div>
+              {site.approach.points.map((point, i) => {
+                const Icon = APPROACH_ICONS[i % APPROACH_ICONS.length];
+                return (
+                  <div key={point}>
+                    <BoilIcon>
+                      <Icon size={18} aria-hidden="true" />
+                    </BoilIcon>
+                    <span>{point}</span>
+                  </div>
+                );
+              })}
             </div>
             <button type="button" className="text-link" onClick={() => scrollTo("process")}>
-              Как мы работаем <ArrowUpRight size={15} aria-hidden="true" />
+              {site.approach.linkLabel} <ArrowUpRight size={15} aria-hidden="true" />
             </button>
           </div>
         </section>
 
         <section className="section before-section">
           <div className="container">
-            <SectionHeading
-              kicker="03 / Результат"
-              title={
-                <>
-                  Разница <em>видна сразу.</em>
-                </>
-              }
-              copy="Сравните состояние автомобиля до и после. Потяните ползунок по фото."
-            />
+            <SectionHeading kicker={site.results.kicker} title={<Em text={site.results.title} />} copy={site.results.copy} />
             <BeforeAfter />
           </div>
         </section>
@@ -1412,16 +1295,9 @@ export default function Home() {
         <section className="section work-section" id="work">
           <div className="container">
             <div className="work-head">
-              <SectionHeading
-                kicker="04 / Наши работы"
-                title={
-                  <>
-                    Результат <em>без слов.</em>
-                  </>
-                }
-              />
+              <SectionHeading kicker={site.works.kicker} title={<Em text={site.works.title} />} />
               <button type="button" className="text-link" onClick={() => openBooking()}>
-                Записаться <ArrowUpRight size={15} aria-hidden="true" />
+                {site.works.cta} <ArrowUpRight size={15} aria-hidden="true" />
               </button>
             </div>
             <div className="work-grid">
@@ -1432,8 +1308,8 @@ export default function Home() {
                   key={item.label}
                 >
                   <Picture
-                    mobile={art(item.mobile, [480, 800], "(max-width: 899px) 100vw")}
-                    desktop={art(item.desktop, [420, 760], "(min-width: 900px) 50vw, 100vw")}
+                    mobile={art(`${item.photo}-tall`, [480, 800], "(max-width: 899px) 100vw")}
+                    desktop={art(`${item.photo}-portrait`, [420, 760], "(min-width: 900px) 50vw, 100vw")}
                     alt={`${item.label} — ${item.service}`}
                   />
                   <div className="work-card-overlay">
@@ -1449,15 +1325,7 @@ export default function Home() {
 
         <section className="section packages-section" id="packages">
           <div className="container">
-            <SectionHeading
-              kicker="05 / Пакеты"
-              title={
-                <>
-                  Выберите <em>свой формат.</em>
-                </>
-              }
-              copy="Три готовых сценария. Нужен другой набор — соберём его и назовём стоимость после осмотра автомобиля."
-            />
+            <SectionHeading kicker={site.packages.kicker} title={<Em text={site.packages.title} />} copy={site.packages.copy} />
             <div className="packages-grid">
               {packages.map((pack, i) => (
                 <article
@@ -1465,7 +1333,7 @@ export default function Home() {
                   style={{ "--d": `${i * 90}ms` } as React.CSSProperties}
                   key={pack.name}
                 >
-                  {i === 1 ? <span className="package-badge">Чаще выбирают</span> : null}
+                  {i === 1 && site.packages.badge ? <span className="package-badge">{site.packages.badge}</span> : null}
                   <span className="eyebrow">0{i + 1} / {pack.name}</span>
                   <h3>{pack.title}</h3>
                   <p>{pack.name}</p>
@@ -1490,13 +1358,13 @@ export default function Home() {
         <section className="section reviews-section" id="reviews">
           <div className="container">
             <div className="reviews-head">
-              <span className="eyebrow">06 / Отзывы</span>
+              <span className="eyebrow">{site.reviews.eyebrow}</span>
               <h2>
-                Нас <em>рекомендуют.</em>
+                <Em text={site.reviews.title} />
               </h2>
               <div className="reviews-rating">
                 <Stars />
-                <span>4.8 из 5 — по 682 отзывам на 2ГИС</span>
+                <span>{site.reviews.rating}</span>
               </div>
             </div>
             <div className="reviews-grid">
@@ -1517,11 +1385,11 @@ export default function Home() {
         <section className="process-band" id="process">
           <div className="container">
             <div className="process-intro">
-              <span className="eyebrow">07 / Процесс</span>
+              <span className="eyebrow">{site.process.eyebrow}</span>
               <h2>
-                Ничего <em>случайного.</em>
+                <Em text={site.process.title} />
               </h2>
-              <p>Шесть шагов от заявки до автомобиля, который выглядит как с завода.</p>
+              <p>{site.process.copy}</p>
             </div>
             <ol className="process-steps">
               {process.map((item, i) => (
@@ -1540,15 +1408,7 @@ export default function Home() {
         <section className="section brands-section">
           <div className="container">
             <div className="brands-layout">
-              <SectionHeading
-                kicker="08 / Опыт"
-                title={
-                  <>
-                    Работаем <em>с вашей машиной.</em>
-                  </>
-                }
-                copy="От городских седанов и кроссоверов до премиальных брендов. Сохраняем характер и состояние каждого автомобиля."
-              />
+              <SectionHeading kicker={site.brands.kicker} title={<Em text={site.brands.title} />} copy={site.brands.copy} />
               <div className="brands-list">
                 {brands.map((brand) => (
                   <span key={brand}>{brand}</span>
@@ -1561,18 +1421,18 @@ export default function Home() {
         <section className="final-cta">
           <Picture
             className="final-media"
-            mobile={art("fleet-mobile", [480, 800, 1200], "100vw")}
-            desktop={art("fleet-wide", [1280, 1920], "100vw")}
-            alt="Автомобили после детейлинга у студии KN Detailing Studio, Алматы"
+            mobile={art(`${site.finalCta.photo}-mobile`, [480, 800, 1200], "100vw")}
+            desktop={art(`${site.finalCta.photo}-wide`, [1280, 1920], "100vw")}
+            alt={`${site.finalCta.alt}, ${CITY}`}
           />
           <div className="final-cta-overlay" />
           <div className="final-content">
-            <span className="eyebrow">09 / Ваш автомобиль. Наш уход.</span>
+            <span className="eyebrow">{site.finalCta.eyebrow}</span>
             <h2>
-              Пора <em>под плёнку?</em>
+              <Em text={site.finalCta.title} />
             </h2>
             <button type="button" className="button button--accent" onClick={() => openBooking()}>
-              Записаться онлайн <ArrowUpRight size={16} aria-hidden="true" />
+              {site.finalCta.cta} <ArrowUpRight size={16} aria-hidden="true" />
             </button>
           </div>
         </section>
@@ -1581,14 +1441,11 @@ export default function Home() {
           <div className="container">
             <div className="contacts-layout">
               <div className="contacts-copy">
-                <span className="eyebrow">10 / Как нас найти</span>
+                <span className="eyebrow">{site.contacts.eyebrow}</span>
                 <h2 id="contacts-title">
-                  Приезжайте <em>в студию.</em>
+                  <Em text={site.contacts.title} />
                 </h2>
-                <p>
-                  Студия в Наурызбайском районе, мкр Таусамалы. Позвоните или напишите в WhatsApp заранее — подготовим бокс и подберём время, чтобы вы не
-                  ждали в очереди.
-                </p>
+                <p>{site.contacts.text}</p>
 
                 <ul className="contacts-list">
                   <li>
@@ -1596,7 +1453,7 @@ export default function Home() {
                       <MapPin size={18} aria-hidden="true" />
                     </span>
                     <div>
-                      <strong>Адрес</strong>
+                      <strong>{site.contacts.labels.address}</strong>
                       <span>
                         {CITY}, {ADDRESS}
                       </span>
@@ -1607,7 +1464,7 @@ export default function Home() {
                       <Clock3 size={18} aria-hidden="true" />
                     </span>
                     <div>
-                      <strong>Часы работы</strong>
+                      <strong>{site.contacts.labels.hours}</strong>
                       <span>{HOURS}</span>
                     </div>
                   </li>
@@ -1616,7 +1473,7 @@ export default function Home() {
                       <Phone size={18} aria-hidden="true" />
                     </span>
                     <div>
-                      <strong>Телефон</strong>
+                      <strong>{site.contacts.labels.phone}</strong>
                       <a href={PHONE_HREF}>{PHONE_DISPLAY}</a>
                     </div>
                   </li>
@@ -1625,7 +1482,7 @@ export default function Home() {
                       <MessageCircle size={18} aria-hidden="true" />
                     </span>
                     <div>
-                      <strong>Мессенджеры</strong>
+                      <strong>{site.contacts.labels.messengers}</strong>
                       <span className="contacts-list__links">
                         <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noreferrer">
                           WhatsApp
@@ -1639,7 +1496,7 @@ export default function Home() {
                 </ul>
 
                 <button type="button" className="button button--accent" onClick={() => openBooking()}>
-                  Записаться онлайн <ArrowUpRight size={16} aria-hidden="true" />
+                  {site.contacts.cta} <ArrowUpRight size={16} aria-hidden="true" />
                 </button>
               </div>
 
@@ -1652,16 +1509,16 @@ export default function Home() {
       <footer className="footer">
         <div className="footer-top">
           <a href="#top" className="brand" onClick={(e) => { e.preventDefault(); scrollTo("top"); }}>
-            <span>KN</span>
-            <small>DETAILING</small>
+            <span>{site.brand.monogram}</span>
+            <small>{site.brand.suffix}</small>
           </a>
           <p>
-            Оклейка. Защита.
+            {site.footer.tagline[0]}
             <br />
-            Тишина. Результат.
+            {site.footer.tagline[1]}
           </p>
           <div className="footer-cta">
-              <span>Есть вопрос по плёнке?</span>
+            <span>{site.footer.question}</span>
             <a href={PHONE_HREF}>
               <Phone size={14} aria-hidden="true" /> {PHONE_DISPLAY}
             </a>
@@ -1682,7 +1539,9 @@ export default function Home() {
               <Instagram size={16} aria-hidden="true" /> Instagram
             </a>
           </div>
-          <span>© {new Date().getFullYear()} KN Detailing Studio</span>
+          <span>
+            © {new Date().getFullYear()} {site.footer.copyrightOwner}
+          </span>
         </div>
       </footer>
 

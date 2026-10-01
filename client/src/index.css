@@ -14,7 +14,14 @@
   --muted-soft: #8b8880;
   --line: rgba(17, 17, 15, 0.16);
   --line-strong: rgba(17, 17, 15, 0.34);
+  /* Акцентная палитра. Значения по умолчанию совпадают с site.config.ts —
+     там они и переопределяются под нового клиента (см. theme в конфиге). */
   --accent: #e8b33c;
+  --accent-ink: #11110f;
+  --accent-stars: #d9a12b;
+  --accent-check: #c08a1e;
+  --accent-muted: #6d4c0e;
+  --accent-strong: #33230a;
   --dark-line: rgba(239, 237, 232, 0.19);
   --serif: "DM Serif Display", Georgia, serif;
   --sans: "Manrope", Arial, sans-serif;
@@ -184,7 +191,7 @@ em {
 
 .button--accent {
   background: var(--accent);
-  color: var(--ink);
+  color: var(--accent-ink);
 }
 
 .button--accent:active {
@@ -1072,7 +1079,7 @@ em {
 .package-card li svg {
   flex: none;
   margin-top: 2px;
-  color: #c08a1e;
+  color: var(--accent-check);
 }
 
 .package-card--featured li svg {
@@ -1110,7 +1117,7 @@ em {
 }
 
 .reviews-rating .review-stars {
-  color: #d9a12b;
+  color: var(--accent-stars);
 }
 
 .reviews-grid {
@@ -1130,7 +1137,7 @@ em {
 .review-stars {
   display: flex;
   gap: 3px;
-  color: #d9a12b;
+  color: var(--accent-stars);
 }
 
 .review-card blockquote {
@@ -1160,12 +1167,12 @@ em {
 
 .process-band {
   padding: var(--section-y) 0;
-  background: #e8b33c;
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .process-intro .eyebrow {
-  color: #6d4c0e;
+  color: var(--accent-muted);
 }
 
 .process-intro h2 {
@@ -1175,7 +1182,7 @@ em {
 .process-intro p {
   margin: 15px 0 0;
   max-width: 34ch;
-  color: #33230a;
+  color: var(--accent-strong);
   font-size: 14.5px;
 }
 
@@ -1193,7 +1200,7 @@ em {
 }
 
 .process-step span {
-  color: #6d4c0e;
+  color: var(--accent-muted);
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1207,7 +1214,7 @@ em {
 
 .process-step p {
   margin: 5px 0 0;
-  color: #33230a;
+  color: var(--accent-strong);
   font-size: 13.5px;
   line-height: 1.5;
 }
@@ -3130,11 +3137,11 @@ em {
   }
 }
 
-/* KN has six directions, not four — three columns keep both desktop rows even
-   instead of leaving a two-card row hanging under a four-card one. */
+/* Число колонок приходит из разметки: она считает его от количества услуг,
+   чтобы последний ряд не оставался с пустыми местами (6 услуг → 3 колонки). */
 @media (min-width: 900px) {
   .services-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--services-cols, 4), minmax(0, 1fr));
     gap: 18px;
   }
 }

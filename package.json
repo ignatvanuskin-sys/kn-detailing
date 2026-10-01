@@ -5,8 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "build:client": "vite build",
+    "brand": "node scripts/apply-seo.mjs && node scripts/make-favicon.mjs",
+    "images": "node scripts/prepare-images.mjs",
+    "images:check": "node scripts/check-images.mjs",
+    "build": "pnpm brand && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:client": "pnpm brand && vite build",
     "start": "node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",

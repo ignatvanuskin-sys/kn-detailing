@@ -1,4 +1,4 @@
-/* One-off helper: pull the studio's 2GIS gallery index and build contact sheets
+﻿/* One-off helper: pull the studio's 2GIS gallery index and build contact sheets
  * of small previews, so the right photos can be picked for each landing slot.
  *
  *   node scripts/gallery-thumbs.mjs            fetch index + thumbs + sheets
@@ -8,7 +8,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const RAW = path.join(ROOT, "raw", "2gis");
+const RAW = path.join(ROOT, "raw", "photos");
 const THUMBS = path.join(RAW, "thumbs");
 const API =
   "https://api.photo.2gis.com/3.0/objects/70000001099671293/albums/all/media?key=gYu1s9N1wP&limit=200";

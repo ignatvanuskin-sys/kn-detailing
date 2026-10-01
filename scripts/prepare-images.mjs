@@ -1,157 +1,71 @@
-/* Builds the responsive image set for the KN Detailing landing page.
+/* Нарезка адаптивных картинок для сайта.
  *
- * Sources are the studio's own photos from its 2GIS gallery (firm
- * 70000001099671293), pulled by scripts/fetch-photos.mjs into raw/2gis/.
- * raw/ is scratch space: only client/public/img ships.
+ * Источник — фотографии клиента в raw/photos/ и привязка в client/src/site.config.ts
+ * (поле photos). Результат — webp в client/public/img с именами, которых ждёт
+ * вёрстка. Каждый кадр обрезается «по центру» под соотношение стороны блока,
+ * поэтому подойдут фото любой пропорции.
  *
- * Every file is generated at the exact dimensions the layout expects, derived
- * from the variant suffix, so no CSS depends on a particular photo.
+ *   node scripts/prepare-images.mjs            нарезать всё
+ *   node scripts/prepare-images.mjs --report   только показать, что получится
  *
- *   node scripts/prepare-images.mjs --report   list what will be produced
- *   node scripts/prepare-images.mjs            (re)generate everything
+ * Что уже сгенерировано, скрипт помнит в client/public/img/.generated.json и
+ * удаляет устаревшее только из этого списка — кадры-заглушки «до/после» и
+ * любые файлы, положенные в img руками, он не трогает.
  */
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { MANIFEST, OUT_DIR, imagePlan } from "./image-plan.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "..");
-const SRC_DIR = path.join(ROOT, "raw", "2gis");
-const OUT_DIR = path.join(ROOT, "client", "public", "img");
-const BACKUP_DIR = path.join(ROOT, "raw", "_orig-img");
+const plan = imagePlan();
 
-/* height = width * RATIO[variant] — mirrors the template's own artwork */
-const RATIO = { card: 3 / 4, portrait: 987 / 760, tall: 4 / 3, mobile: 4 / 3, wide: 9 / 16, tight: 4 / 3 };
-
-/* One photo per service, so no two cards show the same car twice.
- *   p-003  fitters laying a film sheet over a car      -> оклейка
- *   p-012  applicator work on paint                    -> керамика
- *   p-008  squeegee work on a panel                    -> тонировка
- *   p-004  machine polisher on a black bonnet          -> полировка
- *   p-013  work inside an open door                    -> шумоизоляция
- *   p-014  work on a door/window element               -> салон
- */
-const SERVICES = {
-  wrap: "p-003",
-  ceramic: "p-012",
-  tint: "p-008",
-  polish: "p-004",
-  sound: "p-013",
-  salon: "p-014",
-};
-
-/* base name, widths to emit, source photo */
-const PLAN = [
-  ["hero-mobile", [480, 800, 1200], "p-043"], // black G-Class, KN plate — vertical
-  ["hero-wide", [1280, 1920], "p-064"], // same car class shot landscape
-  ["fleet-mobile", [480, 800, 1200], "p-033"], // cars at the studio entrance
-  ["fleet-wide", [1280, 1920], "p-033"],
-  ["craft-card", [480, 800], "p-005"], // 02 / Наш подход
-  ["craft-tall", [480, 800], "p-005"],
-  /* 04 / Наши работы — its own photos, so a work card never repeats a service
-     card standing right above it on the same screen */
-  ["work-a-tall", [480, 800], "p-042"], // black Mercedes, KN sign on the wall
-  ["work-a-portrait", [420, 760], "p-042"],
-  ["work-b-tall", [480, 800], "p-017"], // blue Lexus ES, gloss finish
-  ["work-b-portrait", [420, 760], "p-017"],
-  ["work-c-tall", [480, 800], "p-015"], // white SUV in the bay
-  ["work-c-portrait", [420, 760], "p-015"],
-  ["work-d-tall", [480, 800], "p-002"], // dark car with tinted glass
-  ["work-d-portrait", [420, 760], "p-002"],
-];
-
-for (const [name, src] of Object.entries(SERVICES)) {
-  PLAN.push([`${name}-card`, [480, 800], src]);
-  PLAN.push([`${name}-portrait`, [420, 760], src]);
+if (process.argv[2] === "--report") {
+  for (const item of plan) console.log(`${item.file.padEnd(30)} ${item.width}x${item.height}  <- ${path.basename(item.source)}`);
+  console.log(`\nвсего файлов: ${plan.length}`);
+  process.exit(0);
 }
 
-/* 03 / Результат оставлен кадром из шаблона sentr — по просьбе заказчика этот
-   блок выглядит как в исходном шаблоне. Файлы берутся из бэкапа оригинала и
-   кладутся под префиксом stock-, чтобы не путаться с фото студии. */
-const STOCK_BASES = [
-  "wash-tall",
-  "wash-wide",
-  "interior-tall",
-  "interior-wide",
-  "studio-tall",
-  "studio-wide",
-  "fleet-tall",
-  "fleet-wide",
-];
-const stockFiles = STOCK_BASES.flatMap((base) =>
-  (base.endsWith("wide") ? [1280, 1920] : [480, 800]).map((w) => ({
-    file: `stock-${base}-${w}.webp`,
-    src: path.join(BACKUP_DIR, `${base}-${w}.webp`),
-  })),
-);
+fs.mkdirSync(OUT_DIR, { recursive: true });
 
-/* the variant is always the last segment, so "ready-b-tall" -> "tall" */
-const variantOf = (base) => base.split("-").pop();
-const filesFor = ([base, widths]) =>
-  widths.map((w) => ({ file: `${base}-${w}.webp`, w, h: Math.round(w * RATIO[variantOf(base)]) }));
-
-async function report() {
-  for (const entry of PLAN) {
-    const [base, , src] = entry;
-    for (const f of filesFor(entry)) {
-      console.log(`${f.file.padEnd(28)} ${f.w}x${f.h}  <- ${src}.jpg`);
-    }
+/* 1. убрать то, что генерировали в прошлый раз и что больше не нужно */
+const previous = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, "utf8")) : [];
+const wanted = new Set(plan.map((item) => item.file));
+for (const file of previous) {
+  if (wanted.has(file)) continue;
+  const target = path.join(OUT_DIR, file);
+  if (fs.existsSync(target)) {
+    fs.unlinkSync(target);
+    console.log(`удалён устаревший ${file}`);
   }
-  for (const s of stockFiles) console.log(`${s.file.padEnd(28)} stock  <- ${path.basename(s.src)}`);
-  const all = PLAN.flatMap(filesFor);
-  console.log(
-    `\n${all.length} generated + ${stockFiles.length} stock files, sources: ${[...new Set(PLAN.map((p) => p[2]))].join(", ")}`,
-  );
 }
 
-async function build() {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
-  const wanted = new Set([
-    ...PLAN.flatMap(filesFor).map((f) => f.file),
-    ...stockFiles.map((s) => s.file),
-  ]);
-
-  /* anything from the template's own set that this plan no longer uses */
-  for (const old of fs.readdirSync(OUT_DIR).filter((f) => f.endsWith(".webp"))) {
-    if (wanted.has(old)) continue;
-    const p = path.join(OUT_DIR, old);
-    fs.copyFileSync(p, path.join(BACKUP_DIR, old));
-    fs.unlinkSync(p);
-    console.log(`dropped ${old}`);
+/* 2. нарезать недостающее */
+let made = 0;
+const skipped = [];
+for (const item of plan) {
+  if (!fs.existsSync(item.source)) {
+    skipped.push(item);
+    continue;
   }
-
-  let made = 0;
-  for (const s of stockFiles) {
-    if (!fs.existsSync(s.src)) {
-      console.log(`SKIP ${s.file}: no original at ${path.basename(s.src)}`);
-      continue;
-    }
-    fs.copyFileSync(s.src, path.join(OUT_DIR, s.file));
-    made++;
-  }
-
-  for (const entry of PLAN) {
-    const [, , srcName] = entry;
-    const src = path.join(SRC_DIR, `${srcName}.jpg`);
-    if (!fs.existsSync(src)) {
-      console.log(`SKIP ${entry[0]}: missing ${src}`);
-      continue;
-    }
-    for (const { file, w, h } of filesFor(entry)) {
-      const target = path.join(OUT_DIR, file);
-      if (fs.existsSync(target)) fs.copyFileSync(target, path.join(BACKUP_DIR, file));
-      /* write to a temp path: on Windows, reading then writing the same path in
-         quick succession fails with "unable to open for write" */
-      const tmp = `${target}.tmp`;
-      await sharp(src)
-        .resize(w, h, { fit: "cover", position: "centre" })
-        .webp({ quality: 82, effort: 5 })
-        .toFile(tmp);
-      fs.renameSync(tmp, target);
-      made++;
-    }
-  }
-  console.log(`generated ${made} files`);
+  const target = path.join(OUT_DIR, item.file);
+  /* пишем через временный файл: на Windows чтение и запись одного пути подряд
+     падает с «unable to open for write» */
+  const tmp = `${target}.tmp`;
+  await sharp(item.source)
+    .resize(item.width, item.height, { fit: "cover", position: "centre" })
+    .webp({ quality: 82, effort: 5 })
+    .toFile(tmp);
+  fs.renameSync(tmp, target);
+  made++;
+  if (made % 10 === 0) console.log(`  … ${made}`);
 }
 
-if (process.argv[2] === "--report") await report();
-else await build();
+fs.writeFileSync(MANIFEST, JSON.stringify([...wanted].sort(), null, 2), "utf8");
+
+console.log(`\nготово: нарезано ${made} файлов из ${plan.length}`);
+if (skipped.length) {
+  const missing = [...new Set(skipped.map((item) => path.basename(item.source)))];
+  console.log(`\nНЕТ ИСХОДНИКА (${missing.length}) — положите файлы в raw/photos/:`);
+  for (const file of missing) console.log(`  ${file}`);
+  console.log("\nэти слоты пока показывают кадры из репозитория (если они там есть)");
+}

@@ -1,4 +1,4 @@
-/* Downloads the shortlisted gallery photos at their original size.
+﻿/* Downloads the shortlisted gallery photos at their original size.
  *
  * 2GIS serves any width through a `_<W>x.jpg` suffix; asking for the width the
  * gallery metadata reports returns the untouched original (no upscaling).
@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const RAW = path.join(ROOT, "raw", "2gis");
+const RAW = path.join(ROOT, "raw", "photos");
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
