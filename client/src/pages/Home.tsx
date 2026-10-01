@@ -113,7 +113,6 @@ function RichText({ text }: { text: string }) {
 /* Весь контент живёт в client/src/site.config.ts — здесь только раскладка.
    Локальные имена оставлены прежними, чтобы компоненты читались как раньше. */
 const services = site.services.items;
-const cases = site.results.items;
 const portfolio = site.works.items;
 const packages = site.packages.items;
 const reviews = site.reviews.items;
@@ -218,124 +217,6 @@ function Stars({ count = 5 }: { count?: number }) {
       {Array.from({ length: count }, (_, i) => (
         <Star key={i} size={15} fill="currentColor" strokeWidth={0} aria-hidden="true" />
       ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------ before / after */
-
-function BeforeAfter() {
-  const [index, setIndex] = useState(0);
-  const [value, setValue] = useState(55);
-  const stageRef = useRef<HTMLDivElement | null>(null);
-  const dragging = useRef(false);
-  const current = cases[index];
-
-  const setFromClientX = useCallback((clientX: number) => {
-    const el = stageRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width === 0) return;
-    const next = ((clientX - rect.left) / rect.width) * 100;
-    setValue(Math.min(96, Math.max(4, Math.round(next))));
-  }, []);
-
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
-      if (!dragging.current) return;
-      setFromClientX(e.clientX);
-    };
-    const up = () => {
-      dragging.current = false;
-    };
-    window.addEventListener("pointermove", move, { passive: true });
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
-    return () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-    };
-  }, [setFromClientX]);
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") setValue((v) => Math.max(4, v - 4));
-    if (e.key === "ArrowRight") setValue((v) => Math.min(96, v + 4));
-    if (e.key === "Home") setValue(4);
-    if (e.key === "End") setValue(96);
-  };
-
-  const stageStyle = { "--ba-left": `${value}%`, "--ba-right": `${100 - value}%` } as React.CSSProperties;
-
-  return (
-    <div className="ba-wrap">
-      <div
-        className="ba-stage"
-        ref={stageRef}
-        style={stageStyle}
-        onPointerDown={(e) => {
-          dragging.current = true;
-          (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-          setFromClientX(e.clientX);
-        }}
-      >
-        <div className="ba-layer ba-after">
-          <Picture
-            mobile={art(`${current.photo}-tall`, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(`${current.photo}-wide`, [1280, 1920], "1050px")}
-            alt={`${current.model} — после детейлинга`}
-          />
-        </div>
-        <div className="ba-layer ba-before">
-          <Picture
-            mobile={art(`${current.photo}-tall`, [480, 800], "(max-width: 899px) 100vw")}
-            desktop={art(`${current.photo}-wide`, [1280, 1920], "1050px")}
-            alt={`${current.model} — до детейлинга`}
-          />
-        </div>
-        <div className="ba-divider" aria-hidden="true" />
-        <div className="ba-handle" aria-hidden="true">
-          <ChevronLeft size={18} />
-          <ChevronRight size={18} />
-        </div>
-        <span className="ba-hint">Потяните</span>
-        <div
-          className="ba-control"
-          role="slider"
-          tabIndex={0}
-          aria-label={`Сравнение до и после: ${current.model}`}
-          aria-valuemin={4}
-          aria-valuemax={96}
-          aria-valuenow={value}
-          onKeyDown={onKeyDown}
-          style={{ position: "absolute", inset: 0, zIndex: 4, opacity: 0 }}
-        />
-      </div>
-
-      <div className="ba-caption">
-        <div>
-          <span className="eyebrow">До / после</span>
-          <p>
-            {current.model} — {current.service}
-            <br />
-            <strong>{current.result}</strong>
-          </p>
-        </div>
-      </div>
-
-      <div className="case-tabs" role="group" aria-label="Выбор автомобиля для сравнения">
-        {cases.map((item, i) => (
-          <button
-            key={item.model}
-            type="button"
-            className="case-tab"
-            aria-pressed={i === index}
-            onClick={() => setIndex(i)}
-          >
-            {item.model}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1285,12 +1166,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section before-section">
-          <div className="container">
-            <SectionHeading kicker={site.results.kicker} title={<Em text={site.results.title} />} copy={site.results.copy} />
-            <BeforeAfter />
-          </div>
-        </section>
 
         <section className="section work-section" id="work">
           <div className="container">

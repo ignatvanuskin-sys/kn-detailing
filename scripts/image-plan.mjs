@@ -14,8 +14,6 @@ export const SRC_DIR = path.join(ROOT, "raw", "photos");
 export const OUT_DIR = path.join(ROOT, "client", "public", "img");
 /** Список файлов, которые сгенерировал скрипт — по нему чистится устаревшее. */
 export const MANIFEST = path.join(OUT_DIR, ".generated.json");
-/** Кадры-заглушки «до/после» лежат в репозитории и скриптом не пересобираются. */
-export const PLACEHOLDER = /^result-\d+-(tall|wide)-\d+\.webp$/;
 
 /** Размеры (ширина) для каждого вида кадра. */
 export const VARIANTS = {
@@ -37,7 +35,6 @@ export function slotVariants() {
     [site.approach.photo, ["card", "tall"]],
     ...site.services.items.map((service) => [service.photo, ["card", "portrait"]]),
     ...site.works.items.map((_, i) => [`work-${i + 1}`, ["tall", "portrait"]]),
-    ...site.results.items.map((_, i) => [`result-${i + 1}`, ["tall", "wide"]]),
   ];
   /* Слот без файла в photos — значит, для него остаётся заглушка из репозитория. */
   return list.filter(([slot]) => Boolean(site.photos[slot]));
@@ -61,16 +58,6 @@ export function imagePlan() {
     }
   }
   return plan;
-}
-
-/** Заглушки, которые обязаны лежать в репозитории (слоты не из photos). */
-export function placeholderFiles() {
-  const files = [];
-  for (let i = 1; i <= site.results.items.length; i++) {
-    if (site.photos[`result-${i}`]) continue;
-    files.push(`result-${i}-tall-480.webp`, `result-${i}-tall-800.webp`, `result-${i}-wide-1280.webp`, `result-${i}-wide-1920.webp`);
-  }
-  return files;
 }
 
 export const exists = (dir, file) => fs.existsSync(path.join(dir, file));

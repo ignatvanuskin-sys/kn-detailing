@@ -1,20 +1,18 @@
 /* Проверка, что вёрстке хватает картинок: каждый запрошенный файл лежит в
- * client/public/img, плюс на месте заглушки «до/после».
+ * client/public/img и лишнего там не осталось.
  * Запускать после правок конфига и нарезки фото:
  *
  *   node scripts/check-images.mjs
  */
 import fs from "node:fs";
-import { OUT_DIR, imagePlan, placeholderFiles } from "./image-plan.mjs";
+import { OUT_DIR, imagePlan } from "./image-plan.mjs";
 
 const plan = imagePlan();
 const onDisk = new Set(fs.readdirSync(OUT_DIR).filter((file) => file.endsWith(".webp")));
 
+const wanted = new Set(plan.map((item) => item.file));
 const missing = plan.filter((item) => !onDisk.has(item.file)).map((item) => item.file);
-const missingPlaceholders = placeholderFiles().filter((file) => !onDisk.has(file));
-const unused = [...onDisk].filter(
-  (file) => !plan.some((item) => item.file === file) && !placeholderFiles().includes(file),
-);
+const unused = [...onDisk].filter((file) => !wanted.has(file));
 
 console.log(`нужно файлов: ${plan.length}, лежит в img: ${onDisk.size}`);
 
@@ -26,14 +24,7 @@ if (missing.length) {
   console.log("положите фото в raw/photos/ и запустите node scripts/prepare-images.mjs");
 }
 
-if (missingPlaceholders.length) {
-  console.log(`\nНЕТ ЗАГЛУШЕК «до/после» (${missingPlaceholders.length}):`);
-  for (const file of missingPlaceholders) console.log(`  ${file}`);
-}
-
 if (unused.length) console.log(`\nлишнее в img (${unused.length}): ${unused.join(", ")}`);
 
-if (!missing.length && !missingPlaceholders.length && !unused.length) {
-  console.log("\nOK — весь набор картинок на месте");
-}
-process.exitCode = missing.length || missingPlaceholders.length ? 1 : 0;
+if (!missing.length && !unused.length) console.log("\nOK — весь набор картинок на месте");
+process.exitCode = missing.length ? 1 : 0;

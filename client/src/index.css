@@ -758,145 +758,6 @@ em {
   color: var(--paper);
 }
 
-/* -------------------------------------------------------------- before/after */
-
-.ba-wrap {
-  display: grid;
-  gap: 16px;
-}
-
-.ba-stage {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  background: #cbc6be;
-  touch-action: pan-y;
-  cursor: ew-resize;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.ba-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.ba-layer img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-}
-
-.ba-after img {
-  filter: saturate(1.02) contrast(1.04);
-}
-
-/* the "before" layer is clipped by clip-path — never a fixed pixel width,
-   so the component cannot create horizontal overflow */
-.ba-before {
-  clip-path: inset(0 var(--ba-right, 50%) 0 0);
-}
-
-.ba-before img {
-  filter: grayscale(1) brightness(0.74) contrast(1.05);
-}
-
-.ba-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--ba-left, 50%);
-  width: 2px;
-  margin-left: -1px;
-  background: var(--accent);
-  pointer-events: none;
-}
-
-.ba-handle {
-  position: absolute;
-  top: 50%;
-  left: var(--ba-left, 50%);
-  z-index: 3;
-  display: grid;
-  grid-template-columns: auto auto;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--ink);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
-  pointer-events: none;
-}
-
-.ba-hint {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 2;
-  padding: 7px 11px;
-  background: rgba(17, 17, 15, 0.72);
-  color: #fff;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  pointer-events: none;
-}
-
-.ba-caption {
-  display: grid;
-  gap: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.ba-caption .eyebrow {
-  color: var(--muted-soft);
-}
-
-.ba-caption p {
-  margin: 8px 0 0;
-  font-size: 13.5px;
-  line-height: 1.5;
-}
-
-.ba-caption strong {
-  color: var(--ink);
-}
-
-.case-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding-bottom: 4px;
-}
-
-.case-tab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: var(--tap);
-  padding: 8px 10px;
-  border: 1px solid var(--line-strong);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  line-height: 1.25;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.case-tab[aria-pressed="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper);
-}
-
 /* ---------------------------------------------------------------- portfolio */
 
 .work-section {
@@ -2041,44 +1902,6 @@ em {
     font-size: 12px;
   }
 
-  /* before / after */
-  .ba-wrap {
-    max-width: 1050px;
-    gap: 18px;
-  }
-
-  .ba-stage {
-    aspect-ratio: 16 / 9;
-  }
-
-  .ba-handle {
-    width: 54px;
-    height: 54px;
-    margin: -27px 0 0 -27px;
-  }
-
-  .ba-hint {
-    display: none;
-  }
-
-  .ba-caption {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 18px 0;
-  }
-
-  .ba-caption p {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .case-tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
   /* portfolio */
   .work-head {
     display: flex;
@@ -3084,7 +2907,6 @@ em {
   .footer-social a,
   .brands-list span,
   .text-link,
-  .ba-step-btn,
   .pack-option,
   .field select,
   .field input,
@@ -3094,8 +2916,7 @@ em {
 
   .footer-cta a,
   .footer-social a,
-  .text-link,
-  .ba-step-btn {
+  .text-link {
     display: inline-flex;
     align-items: center;
   }
