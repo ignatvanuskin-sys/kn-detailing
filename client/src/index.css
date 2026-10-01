@@ -324,6 +324,26 @@ em {
   color: #fff;
 }
 
+/* Ссылка «Перейти к содержанию»: не видна мышью, появляется по Tab
+   (правило skill: skip-links). */
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 8px;
+  left: 16px;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform var(--dur-fast) ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .header-phone,
 .nav-links,
 .nav-scrim {
@@ -357,6 +377,10 @@ em {
 
 .nav-links--open a:last-of-type {
   border-bottom: 0;
+}
+
+.nav-links--open a.nav-link--active {
+  color: var(--accent);
 }
 
 .nav-contact {
@@ -1473,6 +1497,45 @@ em {
   border-color: #b3261e;
 }
 
+/* Сводка ошибок формы записи: появляется над шагами, если проверка не прошла.
+   На неё переводится фокус, каждая строка — ссылка на своё поле
+   (правило skill: focusable error summary + ошибки должны объявляться). */
+.form-errors {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #b3261e;
+  background: #fdf4f3;
+  color: #7f1a15;
+}
+
+.form-errors:focus {
+  outline: 2px solid #b3261e;
+  outline-offset: 2px;
+}
+
+.form-errors h3 {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form-errors ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+}
+
+.form-errors a {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .field-error {
   display: block;
   margin-top: 6px;
@@ -1724,6 +1787,15 @@ em {
 
   .nav-links a:hover {
     opacity: 1;
+  }
+
+  /* Текущий раздел в меню (правило skill: nav-state-active). Подчёркивание
+     вместо смены насыщенности — чтобы меню не дёргалось по ширине. */
+  .nav-links a.nav-link--active {
+    opacity: 1;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
   }
 
   .nav-contact {

@@ -426,10 +426,28 @@ function ContactMap() {
 
 const STEPS = site.booking.stepLabels;
 
+/** id поля и его сообщения об ошибке — по ним связаны input, текст ошибки и
+    ссылка в сводке ошибок. */
+const fieldId = (name: string) => `booking-${name}`;
+
+/** Пункты меню: раздел страницы + подпись. По этому же списку меню подсвечивает
+    текущий раздел, поэтому добавлять пункт нужно только здесь. */
+const NAV_ITEMS: [string, string][] = [
+  ["services", "Услуги"],
+  ["work", "Работы"],
+  ["reviews", "Отзывы"],
+  ["process", "Процесс"],
+  ["contacts", "Контакты"],
+];
+
 function BookingSheet({ open, onClose, initialService }: { open: boolean; onClose: () => void; initialService?: string }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<BookingForm>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /* Сводка ошибок: после неудачной проверки шага фокус уходит на неё, а каждая
+     строка ведёт к своему полю — так форма проходится с клавиатуры и читается
+     скринридером (правило skill: focusable error summary). */
+  const summaryRef = useRef<HTMLDivElement | null>(null);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [dragY, setDragY] = useState(0);
@@ -521,7 +539,10 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
   };
 
   const goNext = () => {
-    if (!validate(step)) return;
+    if (!validate(step)) {
+      window.requestAnimationFrame(() => summaryRef.current?.focus());
+      return;
+    }
     if (step === STEPS.length - 1) {
       // Demo submit: there is no backend yet, so hold the loader briefly and
       // then show the success state. Swap this for a real request when there is.
@@ -620,11 +641,38 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
             </div>
 
             <div className="modal-body" ref={bodyRef}>
+              {Object.keys(errors).length > 0 ? (
+                <div className="form-errors" role="alert" tabIndex={-1} ref={summaryRef} aria-labelledby="form-errors-title">
+                  <h3 id="form-errors-title">Проверьте данные</h3>
+                  <ul>
+                    {Object.entries(errors).map(([field, message]) => (
+                      <li key={field}>
+                        <a
+                          href={`#${fieldId(field)}`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            document.getElementById(fieldId(field))?.focus();
+                          }}
+                        >
+                          {message}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               {step === 0 ? (
                 <>
                   <p className="form-lead">Выберите пакет целиком или соберите свой набор — можно взять несколько услуг сразу.</p>
 
-                  <div className="pack-picker" role="group" aria-label="Готовые пакеты">
+                  <div
+                    className="pack-picker"
+                    role="group"
+                    aria-label="Готовые пакеты"
+                    id={fieldId("services")}
+                    tabIndex={-1}
+                    aria-describedby={errors.services ? `${fieldId("services")}-error` : undefined}
+                  >
                     <button
                       type="button"
                       className={`pack-option ${form.pack === "" ? "selected" : ""}`}
@@ -676,7 +724,11 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                           );
                         })}
                       </div>
-                      {errors.services ? <span className="field-error">{errors.services}</span> : null}
+                      {errors.services ? (
+                      <span className="field-error" id={`${fieldId("services")}-error`}>
+                        {errors.services}
+                      </span>
+                    ) : null}
                       <Estimate services={form.services} />
                     </>
                   ) : (
@@ -690,26 +742,40 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                   <label className={`field ${errors.make ? "field--invalid" : ""}`}>
                     <span>Марка</span>
                     <input
+                      id={fieldId("make")}
                       value={form.make}
                       onChange={(e) => set("make", e.target.value)}
                       onFocus={onFieldFocus}
                       placeholder="Toyota"
                       autoComplete="off"
                       enterKeyHint="next"
+                      aria-invalid={errors.make ? true : undefined}
+                      aria-describedby={errors.make ? `${fieldId("make")}-error` : undefined}
                     />
-                    {errors.make ? <span className="field-error">{errors.make}</span> : null}
+                    {errors.make ? (
+                      <span className="field-error" id={`${fieldId("make")}-error`}>
+                        {errors.make}
+                      </span>
+                    ) : null}
                   </label>
                   <label className={`field ${errors.model ? "field--invalid" : ""}`}>
                     <span>Модель</span>
                     <input
+                      id={fieldId("model")}
                       value={form.model}
                       onChange={(e) => set("model", e.target.value)}
                       onFocus={onFieldFocus}
                       placeholder="Camry"
                       autoComplete="off"
                       enterKeyHint="next"
+                      aria-invalid={errors.model ? true : undefined}
+                      aria-describedby={errors.model ? `${fieldId("model")}-error` : undefined}
                     />
-                    {errors.model ? <span className="field-error">{errors.model}</span> : null}
+                    {errors.model ? (
+                      <span className="field-error" id={`${fieldId("model")}-error`}>
+                        {errors.model}
+                      </span>
+                    ) : null}
                   </label>
                   <label className="field">
                     <span>Год выпуска</span>
@@ -731,18 +797,26 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                     <label className={`field ${errors.name ? "field--invalid" : ""}`}>
                       <span>Имя</span>
                       <input
+                        id={fieldId("name")}
                         value={form.name}
                         onChange={(e) => set("name", e.target.value)}
                         onFocus={onFieldFocus}
                         placeholder="Ваше имя"
                         autoComplete="name"
                         enterKeyHint="next"
+                        aria-invalid={errors.name ? true : undefined}
+                        aria-describedby={errors.name ? `${fieldId("name")}-error` : undefined}
                       />
-                      {errors.name ? <span className="field-error">{errors.name}</span> : null}
+                      {errors.name ? (
+                        <span className="field-error" id={`${fieldId("name")}-error`}>
+                          {errors.name}
+                        </span>
+                      ) : null}
                     </label>
                     <label className={`field ${errors.phone ? "field--invalid" : ""}`}>
                       <span>Телефон</span>
                       <input
+                        id={fieldId("phone")}
                         value={form.phone}
                         onChange={(e) => set("phone", e.target.value)}
                         onFocus={onFieldFocus}
@@ -751,8 +825,14 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                         inputMode="tel"
                         autoComplete="tel"
                         enterKeyHint="done"
+                        aria-invalid={errors.phone ? true : undefined}
+                        aria-describedby={errors.phone ? `${fieldId("phone")}-error` : undefined}
                       />
-                      {errors.phone ? <span className="field-error">{errors.phone}</span> : null}
+                      {errors.phone ? (
+                        <span className="field-error" id={`${fieldId("phone")}-error`}>
+                          {errors.phone}
+                        </span>
+                      ) : null}
                     </label>
                   </div>
                   <div className="contact-row" role="group" aria-label="Способ связи">
@@ -777,26 +857,40 @@ function BookingSheet({ open, onClose, initialService }: { open: boolean; onClos
                     <label className={`field ${errors.date ? "field--invalid" : ""}`}>
                       <span>Дата</span>
                       <input
+                        id={fieldId("date")}
                         value={form.date}
                         min={today}
                         onChange={(e) => set("date", e.target.value)}
                         onFocus={onFieldFocus}
                         type="date"
                         enterKeyHint="next"
+                        aria-invalid={errors.date ? true : undefined}
+                        aria-describedby={errors.date ? `${fieldId("date")}-error` : undefined}
                       />
-                      {errors.date ? <span className="field-error">{errors.date}</span> : null}
+                      {errors.date ? (
+                        <span className="field-error" id={`${fieldId("date")}-error`}>
+                          {errors.date}
+                        </span>
+                      ) : null}
                     </label>
                     <label className={`field ${errors.time ? "field--invalid" : ""}`}>
                       <span>Время</span>
                       <input
+                        id={fieldId("time")}
                         value={form.time}
                         onChange={(e) => set("time", e.target.value)}
                         onFocus={onFieldFocus}
                         type="time"
                         step={1800}
                         enterKeyHint="done"
+                        aria-invalid={errors.time ? true : undefined}
+                        aria-describedby={errors.time ? `${fieldId("time")}-error` : undefined}
                       />
-                      {errors.time ? <span className="field-error">{errors.time}</span> : null}
+                      {errors.time ? (
+                        <span className="field-error" id={`${fieldId("time")}-error`}>
+                          {errors.time}
+                        </span>
+                      ) : null}
                     </label>
                   </div>
                   <label className="field" style={{ marginTop: 14 }}>
@@ -914,6 +1008,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openService, setOpenService] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
   useRevealOnScroll();
 
@@ -928,6 +1023,24 @@ export default function Home() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* Подсветка текущего раздела. Наблюдаем узкую полосу в середине экрана, так
+     что активным в каждый момент оказывается ровно один раздел. */
+  useEffect(() => {
+    const targets = NAV_ITEMS.map(([id]) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    if (!targets.length || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const current = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (current) setActiveSection(current.target.id);
+      },
+      { rootMargin: "-45% 0px -50% 0px" },
+    );
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -949,11 +1062,25 @@ export default function Home() {
 
   const scrollTo = (id: string) => {
     setMenuOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const target = document.getElementById(id === "top" ? "main" : id);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
     <div className="site-shell">
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          const main = document.getElementById("main");
+          main?.focus();
+          main?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      >
+        Перейти к содержанию
+      </a>
+
       <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
         <a
           href="#top"
@@ -969,16 +1096,12 @@ export default function Home() {
         </a>
 
         <nav className={menuOpen ? "nav-links nav-links--open" : "nav-links"} aria-label="Основная навигация">
-          {[
-            ["services", "Услуги"],
-            ["work", "Работы"],
-            ["reviews", "Отзывы"],
-            ["process", "Процесс"],
-            ["contacts", "Контакты"],
-          ].map(([id, label]) => (
+          {NAV_ITEMS.map(([id, label]) => (
             <a
               key={id}
               href={`#${id}`}
+              className={activeSection === id ? "nav-link nav-link--active" : "nav-link"}
+              aria-current={activeSection === id ? "true" : undefined}
               onClick={(e) => {
                 e.preventDefault();
                 scrollTo(id);
@@ -1016,7 +1139,9 @@ export default function Home() {
 
       {menuOpen ? <div className="nav-scrim nav-scrim--open" onClick={() => setMenuOpen(false)} role="presentation" /> : null}
 
-      <main id="top">
+      {/* tabIndex нужен, чтобы переход по ссылке «Перейти к содержанию» переносил
+          фокус в основной контент, а не оставлял его в шапке */}
+      <main id="main" tabIndex={-1}>
         <section className="hero">
           <Picture
             className="hero-media"
